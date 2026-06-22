@@ -119,6 +119,10 @@ To enable, add this to the **project's** `.claude/settings.json` (NOT global):
 
 POSIX users: use `~/.claude/skills/kt/inject-handoff.sh` instead.
 
+NOTE: On this version, /clear may not trigger SessionStart; the stub then
+injects on your next full session start instead. The printed resume prompt is
+always available as an immediate fallback.
+
 The hook reads `.kt/.pending-handoff`, injects the Resume prompt + Next action
 stub (only when fresh, within 30 min), and deletes the sentinel — firing at
 most once per `/kt`. It always exits 0 and injects nothing on any error.

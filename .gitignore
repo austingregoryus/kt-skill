@@ -1,0 +1,6 @@
+# transient test fixtures
+tmp/
+*.tmp
+
+# controller scratch
+.sdd/

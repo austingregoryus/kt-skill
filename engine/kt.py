@@ -132,7 +132,47 @@ def cmd_resume(args):
         print(format_entry(f))
     return 0
 
-def cmd_format(args): return 0
+TEMPLATE = """## Resume prompt
+Resuming work. Read `.kt/kt.md` for the full handoff.
+TL;DR: <headline>. Next: <next action>.
+Start by <next action>, then continue.
+
+## Next action
+<the single most important first thing the next context should do>
+
+## Status
+- Done: ...
+- In progress: ...
+- Not started: ...
+
+## Mental model
+<current hypothesis/understanding — include ONLY if there is a real one>
+
+## Decisions + rationale
+- <decision> — <why>
+
+## Dead ends
+- <thing tried> — <why it failed / don't repeat>
+
+## Key files
+- path/to/file — <one-line why it matters>
+
+## Signals (auto)
+- Branch: <git rev-parse --abbrev-ref HEAD>
+- Uncommitted: <git status -s, with .kt/ filtered, or "clean">
+- Recent commits:
+  - <git log -5 --oneline>
+- Todos: <current todo list, or omit>
+"""
+
+def gitignore_remove(cwd):
+    gi = os.path.join(cwd, ".gitignore")
+    if not os.path.exists(gi): return
+    kept = [l for l in read_text(gi).splitlines() if l.strip() != ".kt/"]
+    write_text(gi, ("\n".join(kept) + "\n") if kept else "")
+
+def cmd_format(args):
+    sys.stdout.write(TEMPLATE); return 0
 
 def safe_remove(path):
     try: os.remove(path)
@@ -183,9 +223,20 @@ def cmd_list(args):
     for f in files:
         print(format_entry(f))
     return 0
-def cmd_cancel(args): return 0
-def cmd_share(args): return 0
-def cmd_local(args): return 0
+def cmd_cancel(args):
+    safe_remove(os.path.join(kt_dir(args.cwd), SENTINEL))
+    print("kt: pending handoff cancelled."); return 0
+
+def cmd_share(args):
+    d = kt_dir(args.cwd); os.makedirs(d, exist_ok=True)
+    write_text(os.path.join(d, SHARED), "")
+    gitignore_remove(args.cwd)
+    print("kt: handoffs are now git-tracked (shared)."); return 0
+
+def cmd_local(args):
+    safe_remove(os.path.join(kt_dir(args.cwd), SHARED))
+    ensure_gitignore(args.cwd)
+    print("kt: handoffs are now local-only (gitignored)."); return 0
 
 DISPATCH = {"save": cmd_save, "resume": cmd_resume, "format": cmd_format,
             "inject": cmd_inject, "list": cmd_list, "cancel": cmd_cancel,

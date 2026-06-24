@@ -131,5 +131,32 @@ class TestInject(unittest.TestCase):
             r = inject(other)
             self.assertEqual(r.stdout.strip(), "")
 
+class TestFormatToggles(unittest.TestCase):
+    def test_format_prints_template_with_sections(self):
+        with tempfile.TemporaryDirectory() as d:
+            r = run(["format"], d)
+            self.assertEqual(r.returncode, 0)
+            self.assertIn("## Resume prompt", r.stdout)
+            self.assertIn("## Next action", r.stdout)
+            self.assertEqual(kt.section(r.stdout, "Next action")[:0], [])  # section() parses it
+            self.assertTrue(kt.section(r.stdout, "Resume prompt"))
+    def test_share_then_local(self):
+        with tempfile.TemporaryDirectory() as d:
+            subprocess.run(["git", "init", "-q"], cwd=d)
+            run(["save", "--note", "x"], d, BODY)             # gitignores .kt/
+            run(["share"], d)
+            self.assertTrue(os.path.exists(os.path.join(d, ".kt", ".shared")))
+            gi = open(os.path.join(d, ".gitignore"), encoding="utf-8").read()
+            self.assertNotIn(".kt/", gi.splitlines())
+            run(["local"], d)
+            self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".shared")))
+            gi = open(os.path.join(d, ".gitignore"), encoding="utf-8").read()
+            self.assertIn(".kt/", gi.splitlines())
+    def test_cancel_removes_sentinel(self):
+        with tempfile.TemporaryDirectory() as d:
+            run(["save", "--note", "x"], d, BODY)
+            run(["cancel"], d)
+            self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".pending-handoff")))
+
 if __name__ == "__main__":
     unittest.main()

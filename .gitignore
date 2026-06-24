@@ -4,3 +4,5 @@ tmp/
 
 # controller scratch
 .sdd/
+__pycache__/
+*.pyc

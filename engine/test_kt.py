@@ -53,14 +53,15 @@ class TestSave(unittest.TestCase):
             self.assertTrue(os.path.exists(kt_md))
             text = open(kt_md, encoding="utf-8").read()
             self.assertTrue(text.startswith("# KT — My headline"))
-            self.assertIn("· by Codex CLI", text)
+            self.assertIn("·  by Codex CLI", text)
             self.assertIn("## Resume prompt", text)          # body persisted verbatim
             self.assertEqual(len([f for f in os.listdir(os.path.join(d, ".kt"))
                                   if f.startswith("kt-")]), 1)
             sent = open(os.path.join(d, ".kt", ".pending-handoff"), encoding="utf-8").read().splitlines()
             self.assertEqual(os.path.normcase(sent[0]),
                              os.path.normcase(os.path.abspath(kt_md)))
-            self.assertIn("Ship it.", r.stdout)              # resume prompt echoed
+            self.assertIn("Resuming. Read", r.stdout)        # resume prompt echoed
+            self.assertNotIn("## Next action", r.stdout)     # but NOT the rest of the doc
 
     def test_same_second_no_clobber(self):
         with tempfile.TemporaryDirectory() as d:

@@ -88,7 +88,7 @@ def cmd_save(args):
     d = kt_dir(args.cwd)
     body = sys.stdin.read()
     now = datetime.now()
-    header = f"# KT — {args.note}  ·  {now.strftime('%Y-%m-%d %H:%M')} · by {args.tool}\n\n"
+    header = f"# KT — {args.note}  ·  {now.strftime('%Y-%m-%d %H:%M')}  ·  by {args.tool}\n\n"
     doc = header + body
     try:
         os.makedirs(d, exist_ok=True)
@@ -104,11 +104,8 @@ def cmd_save(args):
     write_text(os.path.join(d, SENTINEL), kt_md_abs + "\n" + now.astimezone().isoformat() + "\n")
     if not os.path.exists(os.path.join(d, SHARED)):
         ensure_gitignore(args.cwd)
-    lines = body.splitlines()
-    pat = re.compile(r'^##\s+Resume prompt\s*$')
-    start = next((i for i, ln in enumerate(lines) if pat.match(ln)), None)
-    if start is not None:
-        print("\n".join(lines[start:]))
+    rp = section(body, "Resume prompt")
+    if rp: print("\n".join(rp))
     return 0
 def cmd_resume(args): return 0
 def cmd_format(args): return 0

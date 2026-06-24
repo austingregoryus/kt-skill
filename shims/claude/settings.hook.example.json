@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/Nukew/.kt/kt.py inject"
+          }
+        ]
+      }
+    ]
+  }
+}

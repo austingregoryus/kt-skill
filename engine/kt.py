@@ -133,7 +133,47 @@ def cmd_resume(args):
     return 0
 
 def cmd_format(args): return 0
-def cmd_inject(args): return 0
+
+def safe_remove(path):
+    try: os.remove(path)
+    except OSError: pass
+
+def cmd_inject(args):
+    try:
+        raw = sys.stdin.read()
+        cwd = args.cwd
+        try:
+            j = json.loads(raw)
+            if isinstance(j, dict) and j.get("cwd"): cwd = j["cwd"]
+        except Exception:
+            pass
+        d = kt_dir(cwd)
+        sentinel = os.path.join(d, SENTINEL)
+        if not os.path.exists(sentinel): return 0
+        lines = read_text(sentinel).splitlines()
+        if len(lines) < 2: safe_remove(sentinel); return 0
+        doc_path, iso = lines[0].strip(), lines[1].strip()
+        try:
+            then = datetime.fromisoformat(iso)
+        except ValueError:
+            safe_remove(sentinel); return 0
+        now = datetime.now(then.tzinfo) if then.tzinfo else datetime.now()
+        if (now - then).total_seconds() / 60 > FRESH_MIN:
+            safe_remove(sentinel); return 0
+        expected = os.path.abspath(os.path.join(d, "kt.md"))
+        if os.path.normcase(os.path.abspath(doc_path)) != os.path.normcase(expected):
+            safe_remove(sentinel); return 0
+        if not os.path.exists(doc_path):
+            safe_remove(sentinel); return 0
+        rp = section(read_text(doc_path), "Resume prompt")
+        if not rp: safe_remove(sentinel); return 0
+        stub = "## Resume prompt\n" + "\n".join(rp) + "\n\n(Read .kt/kt.md for the full handoff.)"
+        sys.stdout.write(json.dumps({"hookSpecificOutput": {
+            "hookEventName": "SessionStart", "additionalContext": stub}}))
+        safe_remove(sentinel)
+        return 0
+    except Exception:
+        return 0
 
 def cmd_list(args):
     d = kt_dir(args.cwd)

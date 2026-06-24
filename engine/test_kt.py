@@ -88,5 +88,48 @@ class TestResume(unittest.TestCase):
             self.assertNotEqual(r.returncode, 0)
             self.assertIn("no handoff", r.stderr.lower())
 
+from datetime import datetime, timedelta
+def drop_sentinel(d, when):
+    ktd = os.path.join(d, ".kt"); os.makedirs(ktd, exist_ok=True)
+    with open(os.path.join(ktd, ".pending-handoff"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(os.path.abspath(os.path.join(ktd, "kt.md")) + "\n" + when.astimezone().isoformat() + "\n")
+def inject(d):
+    return subprocess.run([sys.executable, KT, "inject"],
+                          input=json.dumps({"cwd": d}), capture_output=True, text=True)
+
+class TestInject(unittest.TestCase):
+    def test_no_sentinel_no_output(self):
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, ".kt"))
+            r = inject(d)
+            self.assertEqual(r.returncode, 0); self.assertEqual(r.stdout.strip(), "")
+    def test_fresh_emits_nested_json(self):
+        with tempfile.TemporaryDirectory() as d:
+            run(["save", "--note", "x"], d, BODY)        # writes kt.md + a fresh sentinel
+            r = inject(d)
+            self.assertEqual(r.returncode, 0)
+            payload = json.loads(r.stdout)
+            self.assertEqual(payload["hookSpecificOutput"]["hookEventName"], "SessionStart")
+            self.assertIn("ship it.", payload["hookSpecificOutput"]["additionalContext"])  # NOTE: brief said "Ship it." but Resume prompt section has lowercase "ship it."; fixed per spec (fix test, not code)
+            self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".pending-handoff")))
+            self.assertFalse(r.stdout.startswith("﻿"))   # no BOM
+    def test_stale_no_output_deletes(self):
+        with tempfile.TemporaryDirectory() as d:
+            run(["save", "--note", "x"], d, BODY)
+            drop_sentinel(d, datetime.now() - timedelta(minutes=45))
+            r = inject(d)
+            self.assertEqual(r.stdout.strip(), "")
+            self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".pending-handoff")))
+    def test_cross_project_guard(self):
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as other:
+            run(["save", "--note", "x"], d, BODY)
+            # sentinel points at d's kt.md but we inject with cwd=other → must not emit
+            ktd_other = os.path.join(other, ".kt"); os.makedirs(ktd_other)
+            with open(os.path.join(ktd_other, ".pending-handoff"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(os.path.abspath(os.path.join(d, ".kt", "kt.md")) + "\n"
+                        + datetime.now().astimezone().isoformat() + "\n")
+            r = inject(other)
+            self.assertEqual(r.stdout.strip(), "")
+
 if __name__ == "__main__":
     unittest.main()

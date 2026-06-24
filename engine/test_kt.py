@@ -11,7 +11,7 @@ Ship it.
 """
 def run(args, cwd, stdin=""):
     return subprocess.run([sys.executable, KT, *args, "--cwd", cwd],
-                          input=stdin, capture_output=True, text=True)
+                          input=stdin, capture_output=True, text=True, encoding="utf-8")
 
 DOC = """# KT — Demo  ·  2026-06-24 10:00  ·  by Claude Code
 
@@ -72,6 +72,21 @@ class TestSave(unittest.TestCase):
             run(["save", "--note", "b"], d, BODY)
             files = [f for f in os.listdir(ktd) if f.startswith("kt-")]
             self.assertGreaterEqual(len(files), 2)
+
+class TestResume(unittest.TestCase):
+    def test_prints_latest_and_footer(self):
+        with tempfile.TemporaryDirectory() as d:
+            run(["save", "--tool", "Claude Code", "--note", "First"], d, BODY)
+            r = run(["resume"], d)
+            self.assertEqual(r.returncode, 0)
+            self.assertIn("# KT — First", r.stdout)
+            self.assertIn("--- Recent handoffs ---", r.stdout)
+            self.assertIn("(by Claude Code,", r.stdout)
+    def test_missing_handoff_errors(self):
+        with tempfile.TemporaryDirectory() as d:
+            r = run(["resume"], d)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("no handoff", r.stderr.lower())
 
 if __name__ == "__main__":
     unittest.main()

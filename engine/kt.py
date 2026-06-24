@@ -107,10 +107,42 @@ def cmd_save(args):
     rp = section(body, "Resume prompt")
     if rp: print("\n".join(rp))
     return 0
-def cmd_resume(args): return 0
+def first_line(path):
+    with open(path, encoding="utf-8") as f:
+        return f.readline().rstrip("\n")
+
+def format_entry(path):
+    h = parse_header(first_line(path))
+    return f"{os.path.basename(path)} — {h['headline']} (by {h['tool']}, {h['time']})"
+
+def recent_files(d, limit=None):
+    files = sorted(glob.glob(os.path.join(d, "kt-*.md")), reverse=True)
+    return files[:limit] if limit else files
+
+def cmd_resume(args):
+    d = kt_dir(args.cwd)
+    target = os.path.join(d, f"kt-{args.timestamp}.md") if args.timestamp \
+             else os.path.join(d, "kt.md")
+    if not os.path.exists(target):
+        print(f"kt resume: no handoff found at {target}", file=sys.stderr)
+        return 1
+    print(read_text(target))
+    print("--- Recent handoffs ---")
+    for f in recent_files(d, 5):
+        print(format_entry(f))
+    return 0
+
 def cmd_format(args): return 0
 def cmd_inject(args): return 0
-def cmd_list(args): return 0
+
+def cmd_list(args):
+    d = kt_dir(args.cwd)
+    files = recent_files(d)
+    if not files:
+        print("kt list: no handoffs", file=sys.stderr); return 1
+    for f in files:
+        print(format_entry(f))
+    return 0
 def cmd_cancel(args): return 0
 def cmd_share(args): return 0
 def cmd_local(args): return 0

@@ -65,8 +65,51 @@ def main(argv):
     args.cwd = args.cwd or os.getcwd()
     return DISPATCH[args.cmd](args)
 
-# Subcommand stubs (filled in later tasks)
-def cmd_save(args): return 0
+def unique_path(d, ts):
+    n = 2
+    cand = os.path.join(d, f"kt-{ts}.md")
+    while True:
+        try:
+            os.close(os.open(cand, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644))
+            return cand
+        except FileExistsError:
+            cand = os.path.join(d, f"kt-{ts}-{n}.md"); n += 1
+
+def ensure_gitignore(cwd):
+    if not is_git_repo(cwd): return
+    gi = os.path.join(cwd, ".gitignore")
+    existing = read_text(gi) if os.path.exists(gi) else ""
+    if any(l.strip() == ".kt/" for l in existing.splitlines()): return
+    with open(gi, "a", encoding="utf-8", newline="\n") as f:
+        if existing and not existing.endswith("\n"): f.write("\n")
+        f.write(".kt/\n")
+
+def cmd_save(args):
+    d = kt_dir(args.cwd)
+    body = sys.stdin.read()
+    now = datetime.now()
+    header = f"# KT — {args.note}  ·  {now.strftime('%Y-%m-%d %H:%M')} · by {args.tool}\n\n"
+    doc = header + body
+    try:
+        os.makedirs(d, exist_ok=True)
+        path = unique_path(d, now.strftime("%Y%m%d-%H%M%S"))
+        write_text(path, doc)
+        write_text(os.path.join(d, "kt.md"), doc)
+    except OSError as e:
+        print(f"kt save: cannot write {d}: {e}", file=sys.stderr)
+        rp = section(body, "Resume prompt")
+        if rp: print("\n".join(rp))
+        return 1
+    kt_md_abs = os.path.abspath(os.path.join(d, "kt.md"))
+    write_text(os.path.join(d, SENTINEL), kt_md_abs + "\n" + now.astimezone().isoformat() + "\n")
+    if not os.path.exists(os.path.join(d, SHARED)):
+        ensure_gitignore(args.cwd)
+    lines = body.splitlines()
+    pat = re.compile(r'^##\s+Resume prompt\s*$')
+    start = next((i for i, ln in enumerate(lines) if pat.match(ln)), None)
+    if start is not None:
+        print("\n".join(lines[start:]))
+    return 0
 def cmd_resume(args): return 0
 def cmd_format(args): return 0
 def cmd_inject(args): return 0

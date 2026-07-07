@@ -178,6 +178,21 @@ def safe_remove(path):
     try: os.remove(path)
     except OSError: pass
 
+def stub_lines(body):
+    """Resume prompt + Next action: from '## Resume prompt' up to the 3rd '##' header."""
+    lines = body.splitlines()
+    start = next((i for i, ln in enumerate(lines)
+                  if re.match(r'^##\s+Resume prompt\s*$', ln)), None)
+    if start is None: return []
+    out, headers = [], 0
+    for ln in lines[start:]:
+        if re.match(r'^##\s+', ln):
+            headers += 1
+            if headers == 3: break
+        out.append(ln)
+    while out and not out[-1].strip(): out.pop()
+    return out
+
 def cmd_inject(args):
     try:
         raw = sys.stdin.read()
@@ -205,9 +220,9 @@ def cmd_inject(args):
             safe_remove(sentinel); return 0
         if not os.path.exists(doc_path):
             safe_remove(sentinel); return 0
-        rp = section(read_text(doc_path), "Resume prompt")
+        rp = stub_lines(read_text(doc_path))
         if not rp: safe_remove(sentinel); return 0
-        stub = "## Resume prompt\n" + "\n".join(rp) + "\n\n(Read .kt/kt.md for the full handoff.)"
+        stub = "\n".join(rp) + "\n\n(Read .kt/kt.md for the full handoff.)"
         sys.stdout.write(json.dumps({"hookSpecificOutput": {
             "hookEventName": "SessionStart", "additionalContext": stub}}))
         safe_remove(sentinel)

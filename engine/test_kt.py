@@ -110,7 +110,10 @@ class TestInject(unittest.TestCase):
             self.assertEqual(r.returncode, 0)
             payload = json.loads(r.stdout)
             self.assertEqual(payload["hookSpecificOutput"]["hookEventName"], "SessionStart")
-            self.assertIn("ship it.", payload["hookSpecificOutput"]["additionalContext"])  # NOTE: brief said "Ship it." but Resume prompt section has lowercase "ship it."; fixed per spec (fix test, not code)
+            ctx = payload["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("ship it.", ctx)  # NOTE: brief said "Ship it." but Resume prompt section has lowercase "ship it."; fixed per spec (fix test, not code)
+            self.assertIn("## Next action", ctx)   # stub = Resume prompt + Next action
+            self.assertNotIn("## Status", ctx)     # stops at the 3rd header
             self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".pending-handoff")))
             self.assertFalse(r.stdout.startswith("﻿"))   # no BOM
     def test_stale_no_output_deletes(self):

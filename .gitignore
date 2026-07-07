@@ -6,3 +6,8 @@ tmp/
 .sdd/
 __pycache__/
 *.pyc
+
+# local working state (this repo dogfoods its own tool)
+.kt/
+.remember/
+.antigravitycli/

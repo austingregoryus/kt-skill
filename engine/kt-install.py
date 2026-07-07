@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the kt engine to ~/.kt, write PATH wrappers, and lay down shims."""
+"""Install the kt engine to ~/.kt and write PATH wrappers (shims are copied manually; see shims/README.md)."""
 import sys, os, shutil, argparse
 
 REPO = os.path.dirname(os.path.abspath(__file__))

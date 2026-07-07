@@ -899,7 +899,7 @@ resume in this directory.
         "hooks": [
           {
             "type": "command",
-            "command": "python C:/Users/Nukew/.kt/kt.py inject"
+            "command": "python C:/Users/<you>/.kt/kt.py inject"
           }
         ]
       }

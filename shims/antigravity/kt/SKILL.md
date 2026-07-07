@@ -14,5 +14,5 @@ NOTE: On Antigravity, if `/kt`/`/kt-resume` slash invocation is unavailable, inv
 3. Author the full body per the template, including `## Signals (auto)` —
    run `git rev-parse --abbrev-ref HEAD`, `git status -s` (drop `.kt/` lines),
    `git log -5 --oneline`. Omit empty sections; keep Resume prompt + Next action.
-4. Pipe to: `python ~/.kt/kt.py save --tool "Antigravity CLI" --note "<headline>"`.
+4. Write the handoff to a temporary file (e.g., `.kt/tmp.md`), then pipe it to the engine to avoid PowerShell encoding issues: `Get-Content .kt/tmp.md | python ~/.kt/kt.py save --tool "Antigravity" --note "<headline>"` (then delete the temp file).
 5. Show the engine stdout (resume prompt) to the user.

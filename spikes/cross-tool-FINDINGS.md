@@ -15,4 +15,4 @@ Result dir: UNVERIFIED — requires live Codex CLI; run on user machine
 ## C. Antigravity slash invocation  (CONSUMED BY Task 8)
 Drop .agents/skills/kt-resume/SKILL.md (trivial body). Does `/kt-resume`
 invoke it as a slash command, or only conversational triggering?
-Result: UNVERIFIED — requires live Antigravity agent framework; run on user machine
+Result: VERIFIED — While it doesn't automatically register as a clickable UI button, typing `/kt-resume` is read by the agent conversationally. It reliably matches the skill's description trigger and invokes the skill.

@@ -3,9 +3,9 @@
 Run with the engine installed (`python engine/kt-install.py`) and shims copied.
 
 ## A. Engine round trip (any terminal)
-- [ ] `printf '## Resume prompt\nx\n\n## Next action\ny\n' | python ~/.kt/kt.py save --tool "Manual" --note "t"`
-- [ ] `python ~/.kt/kt.py resume` prints the doc + "Recent handoffs".
-- [ ] `python ~/.kt/kt.py list` lists it; `(by Manual, ...)` provenance shown.
+- [ ] `printf '## Resume prompt\nx\n\n## Next action\ny\n' | python $HOME/.kt/kt.py save --tool "Manual" --note "t"`
+- [ ] `python $HOME/.kt/kt.py resume` prints the doc + "Recent handoffs".
+- [ ] `python $HOME/.kt/kt.py list` lists it; `(by Manual, ...)` provenance shown.
 
 ## B. Claude save → resume
 - [ ] `/kt fixing X` writes `.kt/kt.md` (header `· by Claude Code`), prints resume prompt.

@@ -1,9 +1,12 @@
 ---
 name: kt-resume
-description: Resume work from a KT handoff. Use when the user runs /kt-resume or wants to pick up work captured by /kt (possibly from another AI tool). Reads the latest .kt/ handoff and continues.
+description: Resume work from a KT handoff. Use when the user runs /kt-resume, asks to resume or pick up work captured earlier (possibly by /kt or by another AI tool), and the project has a .kt/ handoff to continue from.
 ---
 
-# /kt-resume — Resume from a Knowledge-Transfer handoff
+# kt-resume — Resume from a Knowledge-Transfer handoff
+
+In ZCode this skill is invoked from the `/` menu (Skills group) or by asking
+the agent to "resume from KT" — it is not a built-in slash command.
 
 Use `python $HOME/.kt/kt.py ...` for engine commands. Do not pass
 `~/.kt/kt.py` to Python; PowerShell treats that as a literal relative path.

@@ -14,12 +14,15 @@ class TestInstaller(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(ktdir, "kt.py")))
             self.assertTrue(os.path.exists(os.path.join(ktdir, "kt")))       # POSIX wrapper (also on Win)
             self.assertTrue(os.path.exists(os.path.join(ktdir, "kt.cmd")))   # Windows wrapper
-            cmd = open(os.path.join(ktdir, "kt.cmd"), encoding="utf-8").read()
+            with open(os.path.join(ktdir, "kt.cmd"), encoding="utf-8") as f:
+                cmd = f.read()
             self.assertIn('python "%~dp0kt.py" %*', cmd)
             # idempotent: second run still 0, no duplicate content growth
-            before = open(os.path.join(ktdir, "kt"), encoding="utf-8").read()
+            with open(os.path.join(ktdir, "kt"), encoding="utf-8") as f:
+                before = f.read()
             self.assertEqual(ki.main([], home=home), 0)
-            after = open(os.path.join(ktdir, "kt"), encoding="utf-8").read()
+            with open(os.path.join(ktdir, "kt"), encoding="utf-8") as f:
+                after = f.read()
             self.assertEqual(before, after)
     def test_path_instructions_mention_restart(self):
         with tempfile.TemporaryDirectory() as home:

@@ -1,0 +1,4 @@
+interface:
+  display_name: "KT Handoff"
+  short_description: "Save resumable work handoffs"
+  default_prompt: "Use $kt to save a concise handoff for the current work."

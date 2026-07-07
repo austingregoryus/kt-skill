@@ -1,0 +1,4 @@
+interface:
+  display_name: "KT Resume"
+  short_description: "Resume work from a KT handoff"
+  default_prompt: "Use $kt-resume to resume from the latest KT handoff."

@@ -51,13 +51,15 @@ class TestSave(unittest.TestCase):
             self.assertEqual(r.returncode, 0)
             kt_md = os.path.join(d, ".kt", "kt.md")
             self.assertTrue(os.path.exists(kt_md))
-            text = open(kt_md, encoding="utf-8").read()
+            with open(kt_md, encoding="utf-8") as f:
+                text = f.read()
             self.assertTrue(text.startswith("# KT — My headline"))
             self.assertIn("·  by Codex CLI", text)
             self.assertIn("## Resume prompt", text)          # body persisted verbatim
             self.assertEqual(len([f for f in os.listdir(os.path.join(d, ".kt"))
                                   if f.startswith("kt-")]), 1)
-            sent = open(os.path.join(d, ".kt", ".pending-handoff"), encoding="utf-8").read().splitlines()
+            with open(os.path.join(d, ".kt", ".pending-handoff"), encoding="utf-8") as f:
+                sent = f.read().splitlines()
             self.assertEqual(os.path.normcase(sent[0]),
                              os.path.normcase(os.path.abspath(kt_md)))
             self.assertIn("Resuming. Read", r.stdout)        # resume prompt echoed
@@ -149,11 +151,13 @@ class TestFormatToggles(unittest.TestCase):
             run(["save", "--note", "x"], d, BODY)             # gitignores .kt/
             run(["share"], d)
             self.assertTrue(os.path.exists(os.path.join(d, ".kt", ".shared")))
-            gi = open(os.path.join(d, ".gitignore"), encoding="utf-8").read()
+            with open(os.path.join(d, ".gitignore"), encoding="utf-8") as f:
+                gi = f.read()
             self.assertNotIn(".kt/", gi.splitlines())
             run(["local"], d)
             self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".shared")))
-            gi = open(os.path.join(d, ".gitignore"), encoding="utf-8").read()
+            with open(os.path.join(d, ".gitignore"), encoding="utf-8") as f:
+                gi = f.read()
             self.assertIn(".kt/", gi.splitlines())
     def test_cancel_removes_sentinel(self):
         with tempfile.TemporaryDirectory() as d:

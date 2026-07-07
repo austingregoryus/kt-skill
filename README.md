@@ -6,7 +6,8 @@ tool-neutral handoff under `.kt/` in the project. `/kt-resume` (or a fresh
 context in **any** supported tool) picks it right back up.
 
 Use it when you're about to `/clear`, switch machines, or hand the same task
-from one AI tool to another (Claude Code → Codex CLI → Antigravity → …).
+from one AI tool to another (Claude Code → Codex CLI → ZCode → Antigravity → …).
+
 It's a lightweight, cross-tool alternative to `/compact`.
 
 ## How it works
@@ -15,8 +16,9 @@ It's a lightweight, cross-tool alternative to `/compact`.
   it writes timestamped `.kt/kt-<ts>.md` handoffs plus a stable `.kt/kt.md`,
   records which tool wrote each one, and prints a paste-ready resume prompt.
 - Per-tool **shims** (thin `SKILL.md` files in `shims/`) teach each AI tool to
-  author the handoff body and call the engine. The AI does the thinking; the
-  engine does the I/O.
+  author the handoff body and call the engine. Shims exist for Claude Code,
+  Codex CLI, ZCode, and Antigravity. The AI does the thinking; the engine does
+  the I/O.
 - An optional **SessionStart hook** (Claude Code) auto-injects the resume
   stub into your next session after `/kt` → `/clear`, so there's nothing to
   paste. It fires at most once per handoff, only within 30 minutes, and never
@@ -25,6 +27,21 @@ It's a lightweight, cross-tool alternative to `/compact`.
 `.kt/` is gitignored by default (handoffs are personal scratch).
 `/kt --share` flips a project to git-tracked handoffs; `/kt --local` flips it
 back.
+
+## Supported tools
+
+Each of these ships a shim in `shims/<tool>/` and is supported out of the box:
+
+| Tool        | Skills directory | Shim notes |
+|-------------|------------------|------------|
+| Claude Code | `~/.claude/skills/` | Plus an optional auto-inject hook (`shims/claude/settings.hook.example.json`). |
+| Codex CLI   | `$CODEX_HOME/skills/` or `~/.codex/skills/` | Includes the Codex `agents/openai.yaml` manifest. |
+| ZCode       | `~/.zcode/skills/` (or `~/.agents/skills/` to share with other tools) | Invoke from the `/` menu (Skills group) or by asking the agent. |
+| Antigravity | `.agents/skills/` (project-scoped) or `~/.gemini/config/skills/` (global) | Slash commands (e.g. `/kt`) trigger conversationally. |
+
+Any other tool needs no shim — run `kt save` / `kt resume` (or
+`python $HOME/.kt/kt.py ...`) directly. Full locations and caveats are in
+`shims/README.md`.
 
 ## Install
 
@@ -74,13 +91,13 @@ pwsh -NoProfile tests/inject-handoff.Tests.ps1         # PowerShell hook script
 
 Some integration points are marked UNVERIFIED in `spikes/` (they need a live
 tool session to confirm): whether `/clear` triggers SessionStart on your
-Claude Code version, the Codex skills directory, and Antigravity slash
-invocation. The printed resume prompt always works as a manual fallback.
+Claude Code version and Antigravity slash invocation. The printed resume prompt
+always works as a manual fallback.
 
 ## Migrating from the single-tool version
 
 `inject-handoff.ps1`/`.sh` are superseded by `kt inject`. Existing
 per-project hooks that point at the old scripts keep working, but repoint
-them to `python ~/.kt/kt.py inject` when convenient. The `.kt/` file format
+them to `python $HOME/.kt/kt.py inject` when convenient. The `.kt/` file format
 is unchanged (the header gains a `· by <tool>` field; old handoffs still
 resume fine).

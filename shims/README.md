@@ -1,7 +1,7 @@
 # kt shims — install locations
 
 Each shim is a thin `SKILL.md` that teaches a specific AI coding tool to drive
-the shared engine at `$HOME/.kt/kt.py`. Copy each tool's `kt/` and `kt-resume/`
+the installed shared engine wrapper. Copy each tool's `kt/` and `kt-resume/`
 folders into that tool's skills directory:
 
 | Tool        | Skills directory | Notes |
@@ -19,9 +19,13 @@ the skill as a named agent (`$kt`, `$kt-resume`). Copy the whole folder
 (`SKILL.md` **and** `agents/`) into Codex's skills directory; the `agents/`
 subdir is ignored by other tools, so it is harmless to include.
 
-All shims call the engine via `python $HOME/.kt/kt.py ...` so they work even
-before a PATH refresh. Do not use `python ~/.kt/kt.py ...`; PowerShell passes
-that tilde path to Python as a literal relative path.
+All shims call an absolute wrapper, so they work before a PATH refresh:
 
-Any other tool needs no shim — run `kt save` / `kt resume` (or
-`python $HOME/.kt/kt.py ...`) directly.
+- Windows PowerShell: `& "$HOME/.kt/kt.cmd"`
+- macOS/Linux: `"$HOME/.kt/kt"`
+
+The installer binds the Windows wrapper to the interpreter that ran the
+installer. The POSIX wrapper uses `python3`.
+
+Any other tool needs no shim. Run `kt save` / `kt resume`, or use the absolute
+wrapper for the current platform.

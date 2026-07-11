@@ -9,6 +9,8 @@ if hasattr(sys.stdout, "reconfigure"):
 SENTINEL = ".pending-handoff"
 SHARED = ".shared"
 FRESH_MIN = 30
+LOCAL_IGNORE = ".kt/"
+SENTINEL_IGNORE = ".kt/.pending-handoff"
 
 def kt_dir(cwd): return os.path.join(cwd, ".kt")
 def read_text(path):
@@ -75,18 +77,35 @@ def unique_path(d, ts):
         except FileExistsError:
             cand = os.path.join(d, f"kt-{ts}-{n}.md"); n += 1
 
-def ensure_gitignore(cwd):
+def ensure_gitignore(cwd, rule=LOCAL_IGNORE):
     if not is_git_repo(cwd): return
     gi = os.path.join(cwd, ".gitignore")
     existing = read_text(gi) if os.path.exists(gi) else ""
-    if any(l.strip() == ".kt/" for l in existing.splitlines()): return
+    if any(l.strip() == rule for l in existing.splitlines()): return
     with open(gi, "a", encoding="utf-8", newline="\n") as f:
         if existing and not existing.endswith("\n"): f.write("\n")
-        f.write(".kt/\n")
+        f.write(rule + "\n")
+
+def validate_body(body):
+    headers = []
+    for line in body.splitlines():
+        match = re.match(r'^##\s+(.+?)\s*$', line)
+        if match:
+            headers.append(match.group(1))
+    if headers[:2] != ["Resume prompt", "Next action"]:
+        return "first two H2 sections must be 'Resume prompt' then 'Next action'"
+    for name in ("Resume prompt", "Next action"):
+        if not section(body, name):
+            return f"section '{name}' must not be empty"
+    return None
 
 def cmd_save(args):
     d = kt_dir(args.cwd)
     body = sys.stdin.read()
+    invalid = validate_body(body)
+    if invalid:
+        print(f"kt save: invalid handoff body: {invalid}", file=sys.stderr)
+        return 2
     now = datetime.now()
     header = f"# KT — {args.note}  ·  {now.strftime('%Y-%m-%d %H:%M')}  ·  by {args.tool}\n\n"
     doc = header + body
@@ -102,7 +121,9 @@ def cmd_save(args):
         return 1
     kt_md_abs = os.path.abspath(os.path.join(d, "kt.md"))
     write_text(os.path.join(d, SENTINEL), kt_md_abs + "\n" + now.astimezone().isoformat() + "\n")
-    if not os.path.exists(os.path.join(d, SHARED)):
+    if os.path.exists(os.path.join(d, SHARED)):
+        ensure_gitignore(args.cwd, SENTINEL_IGNORE)
+    else:
         ensure_gitignore(args.cwd)
     rp = section(body, "Resume prompt")
     if rp: print("\n".join(rp))
@@ -165,10 +186,10 @@ Start by <next action>, then continue.
 - Todos: <current todo list, or omit>
 """
 
-def gitignore_remove(cwd):
+def gitignore_remove(cwd, rule):
     gi = os.path.join(cwd, ".gitignore")
     if not os.path.exists(gi): return
-    kept = [l for l in read_text(gi).splitlines() if l.strip() != ".kt/"]
+    kept = [l for l in read_text(gi).splitlines() if l.strip() != rule]
     write_text(gi, ("\n".join(kept) + "\n") if kept else "")
 
 def cmd_format(args):
@@ -245,11 +266,13 @@ def cmd_cancel(args):
 def cmd_share(args):
     d = kt_dir(args.cwd); os.makedirs(d, exist_ok=True)
     write_text(os.path.join(d, SHARED), "")
-    gitignore_remove(args.cwd)
-    print("kt: handoffs are now git-tracked (shared)."); return 0
+    gitignore_remove(args.cwd, LOCAL_IGNORE)
+    ensure_gitignore(args.cwd, SENTINEL_IGNORE)
+    print("kt: handoffs are now eligible for git tracking (shared)."); return 0
 
 def cmd_local(args):
     safe_remove(os.path.join(kt_dir(args.cwd), SHARED))
+    gitignore_remove(args.cwd, SENTINEL_IGNORE)
     ensure_gitignore(args.cwd)
     print("kt: handoffs are now local-only (gitignored)."); return 0
 

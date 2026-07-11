@@ -11,3 +11,6 @@ __pycache__/
 .kt/
 .remember/
 .antigravitycli/
+
+# private design-process artifacts
+docs/superpowers/

@@ -16,7 +16,8 @@ class TestInstaller(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(ktdir, "kt.cmd")))   # Windows wrapper
             with open(os.path.join(ktdir, "kt.cmd"), encoding="utf-8") as f:
                 cmd = f.read()
-            self.assertIn('python "%~dp0kt.py" %*', cmd)
+            self.assertIn(f'@"{sys.executable}" "%~dp0kt.py" %*', cmd)
+            self.assertNotIn('@python ', cmd)
             # idempotent: second run still 0, no duplicate content growth
             with open(os.path.join(ktdir, "kt"), encoding="utf-8") as f:
                 before = f.read()

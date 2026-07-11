@@ -3,9 +3,13 @@
 Run with the engine installed (`python engine/kt-install.py`) and shims copied.
 
 ## A. Engine round trip (any terminal)
-- [ ] `printf '## Resume prompt\nx\n\n## Next action\ny\n' | python $HOME/.kt/kt.py save --tool "Manual" --note "t"`
-- [ ] `python $HOME/.kt/kt.py resume` prints the doc + "Recent handoffs".
-- [ ] `python $HOME/.kt/kt.py list` lists it; `(by Manual, ...)` provenance shown.
+- [ ] Choose the absolute launcher: Windows PowerShell uses
+      `& "$HOME/.kt/kt.cmd"`; macOS/Linux uses `"$HOME/.kt/kt"`.
+- [ ] Pipe `## Resume prompt`, content, `## Next action`, and content to
+      `<kt> save --tool "Manual" --note "t"`.
+- [ ] `<kt> resume` prints the doc + "Recent handoffs".
+- [ ] `<kt> list` lists it; `(by Manual, ...)` provenance shown.
+- [ ] A save missing either required section exits 2 and writes no handoff.
 
 ## B. Claude save → resume
 - [ ] `/kt fixing X` writes `.kt/kt.md` (header `· by Claude Code`), prints resume prompt.

@@ -1,0 +1,36 @@
+name: Portability
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.9', '3.13']
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Engine and installer tests
+        run: python -m unittest discover -s engine -p "test_*.py"
+      - name: POSIX engine and wrapper smoke test
+        if: runner.os != 'Windows'
+        run: bash tests/posix-smoke.sh
+      - name: POSIX legacy hook test
+        if: runner.os != 'Windows'
+        run: bash tests/inject-handoff.sh.test.sh
+      - name: PowerShell legacy hook test
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tests/inject-handoff.Tests.ps1

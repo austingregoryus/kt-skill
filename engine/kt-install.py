@@ -19,7 +19,7 @@ def write_wrappers(ktdir):
     try: os.chmod(posix, 0o755)
     except OSError: pass
     with open(os.path.join(ktdir, "kt.cmd"), "w", encoding="utf-8", newline="\r\n") as f:
-        f.write('@python "%~dp0kt.py" %*\n')
+        f.write(f'@"{sys.executable}" "%~dp0kt.py" %*\n')
 
 def path_instructions(home):
     ktdir = os.path.join(home, ".kt")
@@ -29,16 +29,13 @@ def path_instructions(home):
         f"NOT setx (it truncates at 1024 chars) — then broadcast WM_SETTINGCHANGE.\n"
         f"  POSIX: add 'export PATH=\"$HOME/.kt:$PATH\"' to your shell profile.\n"
         f"IMPORTANT: already-running terminals and AI tools will NOT see the new PATH "
-        f"until you restart them. The shims/hook use the absolute 'python {ktdir}/kt.py ...' "
-        f"form so they work before restart.\n")
+        f"until you restart them. Tool shims call the absolute wrapper in {ktdir}, "
+        f"so they work before restart.\n")
 
 def main(argv, home=None):
     parser = argparse.ArgumentParser(prog="kt-install")
     parser.parse_args(argv)
     home = home or os.path.expanduser("~")
-    if not any(shutil.which(p) for p in ("python", "python3", "py")):
-        print("kt-install: no python interpreter found on PATH.", file=sys.stderr)
-        return 1
     ktdir = install_engine(home)
     write_wrappers(ktdir)
     print(f"kt: engine installed to {ktdir}")

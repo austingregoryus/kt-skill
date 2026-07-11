@@ -45,6 +45,20 @@ class TestParseHeader(unittest.TestCase):
         self.assertEqual((h["headline"], h["tool"]), ("Old", "unknown"))
 
 class TestSave(unittest.TestCase):
+    def test_rejects_bodies_that_cannot_resume(self):
+        cases = {
+            "missing sections": "plain text only\n",
+            "wrong order": "## Next action\nDo it.\n\n## Resume prompt\nResume.\n",
+            "empty resume": "## Resume prompt\n\n## Next action\nDo it.\n",
+            "extra leading h2": "## Status\nWorking.\n\n" + BODY,
+        }
+        for label, body in cases.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as d:
+                r = run(["save", "--note", "invalid"], d, body)
+                self.assertEqual(r.returncode, 2)
+                self.assertIn("invalid handoff body", r.stderr)
+                self.assertFalse(os.path.exists(os.path.join(d, ".kt")))
+
     def test_writes_files_header_sentinel(self):
         with tempfile.TemporaryDirectory() as d:
             r = run(["save", "--tool", "Codex CLI", "--note", "My headline"], d, BODY)
@@ -154,11 +168,22 @@ class TestFormatToggles(unittest.TestCase):
             with open(os.path.join(d, ".gitignore"), encoding="utf-8") as f:
                 gi = f.read()
             self.assertNotIn(".kt/", gi.splitlines())
+            self.assertIn(".kt/.pending-handoff", gi.splitlines())
+            ignored = subprocess.run(
+                ["git", "check-ignore", ".kt/.pending-handoff"], cwd=d,
+                capture_output=True, text=True)
+            self.assertEqual(ignored.returncode, 0)
+            visible = subprocess.run(
+                ["git", "status", "--short", "--untracked-files=all"], cwd=d,
+                capture_output=True, text=True).stdout
+            self.assertNotIn(".kt/.pending-handoff", visible)
+            self.assertIn(".kt/kt.md", visible)
             run(["local"], d)
             self.assertFalse(os.path.exists(os.path.join(d, ".kt", ".shared")))
             with open(os.path.join(d, ".gitignore"), encoding="utf-8") as f:
                 gi = f.read()
             self.assertIn(".kt/", gi.splitlines())
+            self.assertNotIn(".kt/.pending-handoff", gi.splitlines())
     def test_cancel_removes_sentinel(self):
         with tempfile.TemporaryDirectory() as d:
             run(["save", "--note", "x"], d, BODY)
